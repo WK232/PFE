@@ -1,0 +1,10 @@
+epochs: 600
+batch_size: 96
+model: 'NetworkCIFAR'
+distiller: 'Darts_Loss'
+dataset: 'cifar100'
+init_channels: 36
+layers: 20
+num_classes: 100
+arch: 'exp2_1'
+

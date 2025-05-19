@@ -1,0 +1,14 @@
+epochs: 50
+batch_size: 64
+model: 'NAS_Network'
+init_channels: 16
+layers: 17
+distiller: 'CrossEntropy'
+dataset: 'cifar10'
+search_space: 'NAS'
+arch_learning_rate: 0.0003
+arch_weight_decay: 0.001
+weight_decay: 0.0005
+
+
+
