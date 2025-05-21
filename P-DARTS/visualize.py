@@ -39,11 +39,11 @@ def plot(genotype, filename):
 
 
 if __name__ == '__main__':
-  if len(sys.argv) != 2:
-    print("usage:\n python {} ARCH_NAME".format(sys.argv[0]))
-    sys.exit(1)
+  #if len(sys.argv) != 2:
+    #print("usage:\n python {} ARCH_NAME".format(sys.argv[0]))
+    #sys.exit(1)
 
-  genotype_name = sys.argv[1]
+  genotype_name = 'exp_local'
   try:
     genotype = eval('genotypes.{}'.format(genotype_name))
   except AttributeError:
