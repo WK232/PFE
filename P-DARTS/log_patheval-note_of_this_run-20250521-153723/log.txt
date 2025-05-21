@@ -1,0 +1,6 @@
+2025-05-21 15:37:23,696 args = Namespace(workers=4, batch_size=128, learning_rate=0.025, momentum=0.9, weight_decay=0.0003, report_freq=50, epochs=600, init_channels=36, layers=20, auxiliary=True, auxiliary_weight=0.4, cutout=True, cutout_length=16, drop_path_prob=0.3, save='log_patheval-note_of_this_run-20250521-153723', seed=0, arch='PDARTS', grad_clip=5, tmp_data_dir='/home/kharratw/Documents/tessssst/PFE/EM-DARTS/data', note='note_of_this_run', cifar100=False)
+2025-05-21 15:37:23,696 unparsed args = []
+2025-05-21 15:37:23,706 Genotype(normal=[('sep_conv_3x3', 0), ('dil_conv_3x3', 1), ('skip_connect', 0), ('dil_conv_3x3', 2), ('skip_connect', 0), ('dil_conv_3x3', 3), ('sep_conv_3x3', 0), ('dil_conv_5x5', 4)], normal_concat=range(2, 6), reduce=[('avg_pool_3x3', 0), ('skip_connect', 1), ('avg_pool_3x3', 0), ('avg_pool_3x3', 1), ('avg_pool_3x3', 0), ('skip_connect', 2), ('avg_pool_3x3', 0), ('skip_connect', 2)], reduce_concat=range(2, 6))
+2025-05-21 15:37:24,059 param size = 2.860102MB
+2025-05-21 15:37:25,549 Epoch: 0 lr 2.499966e-02
+2025-05-21 15:37:27,324 Train Step: 000 Objs: 3.283311e+00 Acc: 10.156250

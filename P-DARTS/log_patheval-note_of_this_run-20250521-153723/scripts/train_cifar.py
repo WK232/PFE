@@ -80,7 +80,6 @@ def main():
     model = torch.nn.DataParallel(model)
     model = model.cuda()
     logging.info("param size = %fMB", utils.count_parameters_in_MB(model))
-    logging.info("param number = %d", utils.count_parameters(model))
 
     criterion = nn.CrossEntropyLoss()
     criterion = criterion.cuda()
