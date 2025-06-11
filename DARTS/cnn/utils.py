@@ -37,6 +37,61 @@ def accuracy(output, target, topk=(1,)):
   return res
 
 
+def recall(output, target, average='macro'):
+    with torch.no_grad():
+        _, preds = torch.max(output, 1)
+        num_classes = output.size(1)
+        recall_scores = []
+
+        for class_idx in range(num_classes):
+            true_positives = ((preds == class_idx) & (target == class_idx)).sum().float()
+            actual_positives = (target == class_idx).sum().float()
+            if actual_positives == 0:
+                recall_class = torch.tensor(0.0).to(output.device)
+            else:
+                recall_class = true_positives / actual_positives
+            recall_scores.append(recall_class)
+
+        recall_scores = torch.stack(recall_scores)
+
+        if average == 'macro':
+            return recall_scores.mean() * 100
+        else:
+            return recall_scores * 100
+
+def precision_recall_f1(output, target, average='macro'):
+    with torch.no_grad():
+        _, preds = torch.max(output, 1)
+        num_classes = output.size(1)
+        precisions, recalls, f1s = [], [], []
+
+        for class_idx in range(num_classes):
+            true_positives = ((preds == class_idx) & (target == class_idx)).sum().float()
+            predicted_positives = (preds == class_idx).sum().float()
+            actual_positives = (target == class_idx).sum().float()
+
+            precision = true_positives / predicted_positives if predicted_positives > 0 else torch.tensor(0.0).to(output.device)
+            recall = true_positives / actual_positives if actual_positives > 0 else torch.tensor(0.0).to(output.device)
+
+            if precision + recall == 0:
+                f1 = torch.tensor(0.0).to(output.device)
+            else:
+                f1 = 2 * (precision * recall) / (precision + recall)
+
+            precisions.append(precision)
+            recalls.append(recall)
+            f1s.append(f1)
+
+        precisions = torch.stack(precisions) * 100
+        recalls = torch.stack(recalls) * 100
+        f1s = torch.stack(f1s) * 100
+
+        if average == 'macro':
+            return precisions.mean(), recalls.mean(), f1s.mean()
+        else:
+            return precisions, recalls, f1s
+
+
 class Cutout(object):
     def __init__(self, length):
         self.length = length

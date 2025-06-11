@@ -101,7 +101,7 @@ def main():
     logging.info('epoch %d lr %e', epoch, scheduler.get_lr()[0])
     model.drop_path_prob = args.drop_path_prob * epoch / args.epochs
 
-    train_acc, train_obj = train(train_queue, model, criterion, optimizer)
+    train_acc, train_obj, train_recall, train_f1 = train(train_queue, model, criterion, optimizer)
     logging.info('train_acc %f', train_acc)
 
     valid_acc, valid_obj = infer(valid_queue, model, criterion)
@@ -114,6 +114,9 @@ def train(train_queue, model, criterion, optimizer):
   objs = utils.AvgrageMeter()
   top1 = utils.AvgrageMeter()
   top5 = utils.AvgrageMeter()
+  recall_meter = utils.AvgrageMeter()
+  f1_meter = utils.AvgrageMeter()  # <- F1 meter
+
   model.train()
 
   for step, (input, target) in enumerate(train_queue):
@@ -121,27 +124,33 @@ def train(train_queue, model, criterion, optimizer):
     with torch.no_grad():
       target = target.cuda(non_blocking=True)
 
-
     optimizer.zero_grad()
     logits, logits_aux = model(input)
     loss = criterion(logits, target)
+    
     if args.auxiliary:
       loss_aux = criterion(logits_aux, target)
-      loss += args.auxiliary_weight*loss_aux
+      loss += args.auxiliary_weight * loss_aux
+
     loss.backward()
     nn.utils.clip_grad_norm(model.parameters(), args.grad_clip)
     optimizer.step()
 
     prec1, prec5 = utils.accuracy(logits, target, topk=(1, 5))
+    _, recall_value, f1_value = utils.precision_recall_f1(logits, target)  # <- Get recall and F1
+
     n = input.size(0)
     objs.update(loss.item(), n)
     top1.update(prec1.item(), n)
     top5.update(prec5.item(), n)
+    recall_meter.update(recall_value.item(), n)
+    f1_meter.update(f1_value.item(), n)
 
     if step % args.report_freq == 0:
-      logging.info('train %03d %e %f %f', step, objs.avg, top1.avg, top5.avg)
+      logging.info('train %03d %e %f %f %f %f', step, objs.avg, top1.avg, top5.avg, recall_meter.avg, f1_meter.avg)
 
-  return top1.avg, objs.avg
+  return top1.avg, objs.avg, recall_meter.avg, f1_meter.avg
+
 
 
 def infer(valid_queue, model, criterion):
