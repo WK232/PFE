@@ -1,5 +1,0 @@
-2025-05-21 15:43:28,048 gpu device = 0
-2025-05-21 15:43:28,048 args = Namespace(data='../data', set='cifar10', batch_size=96, learning_rate=0.025, momentum=0.9, weight_decay=0.0003, report_freq=50, gpu=0, epochs=600, init_channels=36, layers=20, model_path='saved_models', auxiliary=True, auxiliary_weight=0.4, cutout=True, cutout_length=16, drop_path_prob=0.3, save='eval-EXP-20250521-154327', seed=0, arch='PCDARTS', grad_clip=5)
-2025-05-21 15:43:28,048 genotype = Genotype(normal=[('sep_conv_3x3', 0), ('skip_connect', 1), ('dil_conv_5x5', 1), ('skip_connect', 2), ('dil_conv_5x5', 2), ('skip_connect', 3), ('max_pool_3x3', 0), ('sep_conv_5x5', 1)], normal_concat=range(2, 6), reduce=[('sep_conv_5x5', 0), ('max_pool_3x3', 1), ('dil_conv_5x5', 2), ('sep_conv_5x5', 0), ('dil_conv_5x5', 3), ('dil_conv_5x5', 2), ('dil_conv_3x3', 2), ('sep_conv_3x3', 1)], reduce_concat=range(2, 6))
-2025-05-21 15:43:28,319 param size = 2.853622MB
-2025-05-21 15:43:28,324 param number = 2853622
