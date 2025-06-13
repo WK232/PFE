@@ -44,7 +44,7 @@ args = parser.parse_args()
 import matplotlib.pyplot as plt
 import numpy as np
 
-def visualize_segmentation(input_tensor, pred_mask, target_mask, class_colors, save_path="segmentation_inference_result1.png"):
+def visualize_segmentation(input_tensor, pred_mask, target_mask, class_colors, save_path="segmentation_inference_result3.png"):
     """
     input_tensor: torch.Tensor of shape (2, H, W)
     pred_mask: numpy array (H, W)
@@ -86,7 +86,7 @@ def visualize_segmentation(input_tensor, pred_mask, target_mask, class_colors, s
 
 def infer_and_visualize(args, genotype, test_loader, NUM_CLASSES, device):
     model = Network(args.init_channels, NUM_CLASSES, args.layers, args.auxiliary, genotype)
-    model.load_state_dict(torch.load('/home/kharratw/Documents/tessssst/PFE/DARTS_WITH_DATASET/eval-EXP-20250605-112839/DARTS.pth', map_location=device))
+    model.load_state_dict(torch.load('/home/kharratw/Documents/tessssst/PFE/DARTS_WITH_DATASET/eval-EXP-20250610-100103/DARTS.pth', map_location=device))
     model.to(device)
     model.eval()
     with torch.no_grad():

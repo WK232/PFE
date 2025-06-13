@@ -80,8 +80,17 @@ def main():
         weight_decay=args.weight_decay
     )
 
-    train_data = CoherencePhaseSegmentationDataset(args.data)
-    valid_data = CoherencePhaseSegmentationDataset(args.data)
+    from torch.utils.data import random_split
+
+    full_dataset = CoherencePhaseSegmentationDataset(args.data)
+    logging.info('Dataset size: %d', len(full_dataset))
+# Define the split ratio
+    val_fraction = 0.2  # 20% for validation
+    val_size = int(len(full_dataset) * val_fraction)
+    train_size = len(full_dataset) - val_size
+
+# Split
+    train_data, valid_data = random_split(full_dataset, [train_size, val_size])
 
     train_queue = DataLoader(train_data, batch_size=args.batch_size, shuffle=True, pin_memory=True, num_workers=2)
     valid_queue = DataLoader(valid_data, batch_size=args.batch_size, shuffle=False, pin_memory=True, num_workers=2)
@@ -179,4 +188,8 @@ def infer(valid_queue, model, criterion):
     return acc_meter.avg, objs.avg, recall_meter.avg, f1_meter.avg
 
 if __name__ == '__main__':
-    main()
+    start_time = time.time()
+    main() 
+    end_time = time.time()
+    duration = end_time - start_time
+    logging.info('Eval time: %ds.', duration)
