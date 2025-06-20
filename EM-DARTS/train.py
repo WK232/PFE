@@ -170,9 +170,9 @@ def main():
         lr = scheduler.get_last_lr()[0]
         model.drop_path_prob = args.drop_path_prob * epoch / args.epochs
         # train_transform.transforms[-1].cutout_prob = args.cutout_prob * epoch / (args.epochs - 1)
-        train_acc, train_obj, recall_score, f1_score = train(train_queue, distiller, optimizer, lr, epoch, args, amp_autocast=amp_autocast)
+        train_acc, train_obj = train(train_queue, distiller, optimizer, lr, epoch, args, amp_autocast=amp_autocast)
         scheduler.step()
-        valid_acc, valid_obj, recall_valid, f1_valid = infer(valid_queue, model, validate_loss_fn, epoch, args, amp_autocast=amp_autocast)
+        valid_acc, valid_obj = infer(valid_queue, model, validate_loss_fn, epoch, args, amp_autocast=amp_autocast)
         records.append([epoch, train_acc, train_obj, valid_acc, valid_obj])
         if valid_acc > best_val_acc:
             best_val_acc = valid_acc
@@ -187,16 +187,10 @@ def main():
         writer.writerows(records)  # 写入数据记录
 
 
-from sklearn.metrics import recall_score, f1_score
-import torch.nn.functional as F
-
 def train(train_queue, distiller, optimizer, lr, epoch, args, amp_autocast=suppress):
     objs = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
-    recall_meter = AverageMeter()
-    f1_meter = AverageMeter()
-
     last_idx = len(train_queue) - 1
     for step, (input, target) in enumerate(train_queue):
         distiller.train()
@@ -209,91 +203,58 @@ def train(train_queue, distiller, optimizer, lr, epoch, args, amp_autocast=suppr
         loss.backward()
         nn.utils.clip_grad_norm_(distiller.parameters(), args.grad_clip)
         optimizer.step()
-
         acc1, acc5 = accuracy(logits, target, topk=(1, 5))
         objs.update(loss.item(), n)
         top1.update(acc1.item(), n)
         top5.update(acc5.item(), n)
-
-        # ---- Compute recall and F1-score ----
-        preds = torch.argmax(logits, dim=1)
-        recall = recall_score(target.cpu().numpy(), preds.cpu().numpy(), average='macro', zero_division=0)
-        f1 = f1_score(target.cpu().numpy(), preds.cpu().numpy(), average='macro', zero_division=0)
-        recall_meter.update(recall, n)
-        f1_meter.update(f1, n)
-        # -------------------------------------
-
-        if step % args.report_freq == 0 or step == last_idx:
+        if step % args.report_freq == 0 or step == last_idx:  #
             _logger.info(
                 'Train: {} [{:>4d}/{}]  '
                 'Loss: {loss.val:#.4g} ({loss.avg:#.3g})  '
                 'Acc@1: {top1.val:>7.4f} ({top1.avg:>7.4f})  '
-                'Acc@5: {top5.val:>7.4f} ({top5.avg:>7.4f})  '
-                'Recall: {recall:.4f}  F1: {f1:.4f}  '
+                'Acc@5: {top5.val:>7.4f} ({top5.avg:>7.4f})'
                 'LR: {lr:.3e}'
                 .format(
                     epoch,
                     step, last_idx,
                     loss=objs,
                     top1=top1, top5=top5,
-                    recall=recall, f1=f1,
                     lr=lr))
 
-    return top1.avg, objs.avg, recall_meter.avg, f1_meter.avg
+    return top1.avg, objs.avg
 
-
-
-from sklearn.metrics import recall_score, f1_score
 
 def infer(valid_queue, model, criterion, epoch, args, amp_autocast=suppress):
     objs = AverageMeter()
     top1 = AverageMeter()
     top5 = AverageMeter()
-    recall_meter = AverageMeter()
-    f1_meter = AverageMeter()
-
     model.eval()
     last_idx = len(valid_queue) - 1
-
     with torch.no_grad():
         for step, (input, target) in enumerate(valid_queue):
             input, target = input.cuda(non_blocking=True), target.cuda(non_blocking=True)
-
             with amp_autocast():
                 logits = model(input)
             loss = criterion(logits, target)
-
             acc1, acc5 = accuracy(logits, target, topk=(1, 5))
             n = input.size(0)
             objs.update(loss.item(), n)
             top1.update(acc1.item(), n)
             top5.update(acc5.item(), n)
 
-            # ---- Compute recall and F1-score ----
-            preds = torch.argmax(logits, dim=1)
-            recall = recall_score(target.cpu().numpy(), preds.cpu().numpy(), average='macro', zero_division=0)
-            f1 = f1_score(target.cpu().numpy(), preds.cpu().numpy(), average='macro', zero_division=0)
-            recall_meter.update(recall, n)
-            f1_meter.update(f1, n)
-            # -------------------------------------
-
             if step % args.report_freq == 0 or step == last_idx:
                 _logger.info(
                     'Valid: {} [{:>4d}/{}]  '
                     'Loss: {loss.val:#.4g} ({loss.avg:#.3g})  '
                     'Acc@1: {top1.val:>7.4f} ({top1.avg:>7.4f})  '
-                    'Acc@5: {top5.val:>7.4f} ({top5.avg:>7.4f})  '
-                    'Recall: {recall:.4f}  F1: {f1:.4f}'
+                    'Acc@5: {top5.val:>7.4f} ({top5.avg:>7.4f})'
                     .format(
                         epoch,
                         step, last_idx,
-                        loss=objs,
                         top1=top1, top5=top5,
-                        recall=recall, f1=f1
+                        loss=objs
                     ))
-
-    return top1.avg, objs.avg, recall_meter.avg, f1_meter.avg
-
+    return top1.avg, objs.avg
 
 
 if __name__ == '__main__':

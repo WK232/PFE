@@ -1,0 +1,14 @@
+2025-06-13 11:27:02,775 -         train_search: [    INFO] - Training with a single process on 1 GPUs.
+2025-06-13 11:27:03,353 -     timm.data.config: [    INFO] - Data processing configuration for current model + dataset:
+2025-06-13 11:27:03,353 -     timm.data.config: [    INFO] - 	input_size: (3, 32, 32)
+2025-06-13 11:27:03,353 -     timm.data.config: [    INFO] - 	interpolation: bilinear
+2025-06-13 11:27:03,353 -     timm.data.config: [    INFO] - 	mean: (0.49139968, 0.48215827, 0.44653124)
+2025-06-13 11:27:03,353 -     timm.data.config: [    INFO] - 	std: (0.24703233, 0.24348505, 0.26158768)
+2025-06-13 11:27:03,353 -     timm.data.config: [    INFO] - 	crop_pct: 1.0
+2025-06-13 11:27:03,353 -     timm.data.config: [    INFO] - 	crop_mode: center
+2025-06-13 11:27:05,137 -         train_search: [    INFO] - 
+-------------------------------
+Learnable parameters
+Student: 1.72M
+Extra: 0.00M
+-------------------------------

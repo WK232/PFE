@@ -44,13 +44,13 @@ if __name__ == '__main__':
     #     print("usage:\n python {} ARCH_NAME".format(sys.argv[0]))
     #     sys.exit(1)
 
-    genotype_name = 'exp2_local'
+    genotype_name = 'random4'
     try:
         genotype = eval('genotypes.{}'.format(genotype_name))
     except AttributeError:
         print("{} is not specified in genotypes.py".format(genotype_name))
         sys.exit(1)
 
-    path = '/home/kharratw/Documents/tessssst/PFE/EM-DARTS/fig/genotypes/cnn/'
+    path = '../fig/genotypes/cnn/'
     plot(genotype.normal, path + genotype_name + "_normal")
     plot(genotype.reduce, path + genotype_name + "_reduction")

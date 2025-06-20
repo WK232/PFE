@@ -34,12 +34,6 @@ exp2_4 = Genotype(
     reduce=[('sep_conv_3x3', 1), ('sep_conv_3x3', 0), ('dil_conv_5x5', 2), ('sep_conv_5x5', 1), ('dil_conv_3x3', 3),
             ('skip_connect', 0), ('dil_conv_3x3', 3), ('sep_conv_3x3', 1)], reduce_concat=range(2, 6))
 
-exp2_local = Genotype(
-    normal=[('sep_conv_5x5', 0), ('sep_conv_3x3', 1), ('sep_conv_3x3', 0), ('sep_conv_3x3', 2), ('dil_conv_3x3', 2),
-             ('sep_conv_3x3', 0), ('sep_conv_3x3', 2), ('dil_conv_5x5', 3)], normal_concat=range(2, 6), 
-    reduce=[('sep_conv_5x5', 0), ('sep_conv_3x3', 1), ('dil_conv_5x5', 2), ('sep_conv_5x5', 1), ('dil_conv_5x5', 3), 
-            ('dil_conv_5x5', 2), ('dil_conv_3x3', 3), ('sep_conv_5x5', 4)], reduce_concat=range(2, 6))
-
 # Experiment 3
 # 97.26  w
 exp3_cifar10_s1 = Genotype(
