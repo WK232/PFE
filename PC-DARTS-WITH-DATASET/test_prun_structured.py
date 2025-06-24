@@ -10,13 +10,15 @@ import genotypes
 import torch.nn.functional as F
 import torch.optim as optim
 import tqdm
+import logging
+import utils
 
 # ----------------------------
 # Argument Parsing
 # ----------------------------
 parser = argparse.ArgumentParser("Evaluate Pruned Segmentation Model")
 parser.add_argument('--data', type=str, default='/home/kharratw/Documents/tessssst/PFE/ReadyToBeUsedDataset', help='Path to dataset')
-parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/PCmodel_pruned.pth', help='Path to pruned model')
+parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/model_pruned_0_6.pth', help='Path to pruned model')
 parser.add_argument('--batch_size', type=int, default=4, help='Batch size')
 parser.add_argument('--gpu', type=int, default=0, help='GPU ID')
 parser.add_argument('--init_channels', type=int, default=36)
@@ -94,7 +96,6 @@ def train_one_epoch(model, dataloader, optimizer, device, epoch_idx, report_ever
         loss.backward()
         optimizer.step()
 
-        # Track metrics
         with torch.no_grad():
             preds = torch.argmax(logits, dim=1)
             acc = calculate_accuracy(preds, target)
@@ -119,15 +120,15 @@ def train_one_epoch(model, dataloader, optimizer, device, epoch_idx, report_ever
 # ----------------------------
 def evaluate():
     device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
-
-    model = torch.load(args.model_path, map_location=device,weights_only=False)
+    model = torch.load(args.model_path, map_location=device, weights_only=False)
     model.to(device)
+    print("param number = %d", utils.count_parameters(model))
 
     dataset = CoherencePhaseSegmentationDataset(args.data)
     train_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
     val_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=2)
 
-    if False:
+    if args.fine_tune:
         print("🔧 Starting fine-tuning...")
         optimizer = optim.Adam(model.parameters(), lr=1e-4)
         for epoch in range(args.epochs):
@@ -137,14 +138,20 @@ def evaluate():
         print("✅ Fine-tuned model saved to 'fine_tuned_model.pth'")
 
     model.eval()
-    total_acc, total_iou, count, valid_iou_count = 0, 0, 0, 0
+    criterion = torch.nn.CrossEntropyLoss()
+    acc_meter = utils.AvgrageMeter()
+    recall_meter = utils.AvgrageMeter()
+    loss_meter = utils.AvgrageMeter()
+
+    iou_sum = 0.0
+    valid_iou_count = 0
+
     max_iou = -1
     best_input, best_pred, best_target = None, None, None
-    best_acc, best_iou = 0, 0
     class_colors = [(0, 0, 0), (255, 0, 0)]
 
     with torch.no_grad():
-        for (coh, pha), target in val_loader:
+        for step, ((coh, pha), target) in enumerate(val_loader):
             coh, pha, target = coh.to(device), pha.to(device), target.to(device)
             input_tensor = torch.cat([coh, pha], dim=1)
 
@@ -152,48 +159,57 @@ def evaluate():
             if isinstance(logits, tuple):
                 logits = logits[0]
 
-            logits = F.interpolate(logits, size=target.shape[1:], mode='bilinear', align_corners=False)
+            if logits.shape[2:] != target.shape[1:]:
+                logits = F.interpolate(logits, size=target.shape[1:], mode='bilinear', align_corners=False)
+
+            loss = criterion(logits, target.long())
+
+            acc, recall, _ = utils.pixel_metrics(logits, target, args.num_classes)
+            n = input_tensor.size(0)
+            acc_meter.update(acc, n)
+            recall_meter.update(recall, n)
+            loss_meter.update(loss.item(), n)
+
             preds = torch.argmax(logits, dim=1)
 
             for i in range(preds.size(0)):
                 pred_np = preds[i].cpu().numpy()
                 target_np = target[i].cpu().numpy()
-                acc = calculate_accuracy(preds[i], target[i])
                 iou_pos = compute_iou_single_class(pred_np, target_np, class_id=1)
 
-                total_acc += acc
-                count += 1
-
                 if iou_pos is not None:
-                    total_iou += iou_pos
+                    iou_sum += iou_pos
                     valid_iou_count += 1
+
                     if iou_pos > max_iou:
                         max_iou = iou_pos
                         best_input = input_tensor[i]
                         best_pred = pred_np
                         best_target = target_np
-                        best_acc = acc
-                        best_iou = iou_pos
 
-    avg_iou = total_iou / valid_iou_count if valid_iou_count > 0 else 0.0
+            if step % 10 == 0:
+                logging.info('Eval step %03d acc %.4f recall %.4f loss %.4f', step, acc_meter.avg, recall_meter.avg, loss_meter.avg)
+
+    avg_iou = iou_sum / valid_iou_count if valid_iou_count > 0 else 0.0
 
     if best_input is not None:
         visualize(
             best_input, best_pred, best_target,
-            class_colors, best_iou,
-            os.path.basename(args.model_path), best_acc, avg_iou,
+            class_colors, max_iou,
+            os.path.basename(args.model_path), acc_meter.avg, avg_iou,
             out_path="best_pruned_model_inference_PCmodel.png"
         )
-        print(f"🖼️ Saved best image with Class-1 IoU: {best_iou:.4f} | Avg IoU: {avg_iou:.4f}")
+        print(f"🖼️ Saved best image with Best IoU: {max_iou:.4f} | Avg IoU: {avg_iou:.4f}")
     else:
         print("⚠️ No valid samples with class 1 found.")
 
     print(f"\n=== Final Evaluation ===")
-    print(f"Avg Accuracy: {total_acc / count:.4f}")
-    if valid_iou_count > 0:
-        print(f"Avg Class-1 IoU: {avg_iou:.4f}")
-    else:
-        print("Avg Class-1 IoU: N/A (no valid samples)")
+    print(f"Avg Accuracy: {acc_meter.avg:.4f}")
+    print(f"Avg Recall: {recall_meter.avg:.4f}")
+    print(f"Avg Loss: {loss_meter.avg:.4f}")
+    print(f"Avg IoU (Class 1): {avg_iou:.4f}")
+
+
 
 if __name__ == '__main__':
     evaluate()

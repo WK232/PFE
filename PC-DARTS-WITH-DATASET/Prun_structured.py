@@ -10,7 +10,7 @@ from model import NetworkCIFAR as Network  # Assumes Network is used across arch
 parser = argparse.ArgumentParser()
 parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/eval-EXP-20250617-095107/PC-DARTS.pth', help='Path to the original model weights')
 parser.add_argument('--save_path', type=str, default='model_pruned.pth', help='Path to save pruned model')
-parser.add_argument('--prune_ratio', type=float, default=0.4, help='Channel pruning ratio')
+parser.add_argument('--prune_ratio', type=float, default=0.8, help='Channel pruning ratio')
 parser.add_argument('--init_channels', type=int, default=36, help='Initial channels')
 parser.add_argument('--layers', type=int, default=20, help='Number of layers')
 parser.add_argument('--auxiliary', action='store_true', help='Use auxiliary head')
