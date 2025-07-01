@@ -148,7 +148,7 @@ def main():
     teacher_model = teacher_model.cuda()
     teacher_model.eval()
 
-    student_model = Network(16, 2, 14, False, genotype)
+    student_model = Network(36, 2, 14, False, genotype)
     student_model.drop_path_prob = args.drop_path_prob
     student_model.apply(init_weights)
     student_model = student_model.cuda()

@@ -16,7 +16,7 @@ import tqdm
 # ----------------------------
 parser = argparse.ArgumentParser("Evaluate Pruned Segmentation Model")
 parser.add_argument('--data', type=str, default='/home/kharratw/Documents/tessssst/PFE/ReadyToBeUsedDataset', help='Path to dataset')
-parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/kd-KD-EXP-20250623-104334-14layers/student_epoch_299.pth', help='Path to pruned model')
+parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/kd-KD-EXP-20250625-163200-36channels-14layers/student_epoch_299.pth', help='Path to pruned model')
 parser.add_argument('--batch_size', type=int, default=4, help='Batch size')
 parser.add_argument('--gpu', type=int, default=0, help='GPU ID')
 parser.add_argument('--init_channels', type=int, default=36)
@@ -121,7 +121,7 @@ def train_one_epoch(model, dataloader, optimizer, device, epoch_idx, report_ever
 def evaluate():
     device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
 
-    model = Network(16, 2, 14, False, genotypes.PCDARTS)
+    model = Network(36, 2, 14, False, genotypes.PCDARTS)
     model.drop_path_prob = args.drop_path_prob
     model.load_state_dict(torch.load(args.model_path))
     model.to(device)

@@ -8,14 +8,16 @@ from model import NetworkCIFAR as Network  # Assumes Network is used across arch
 # ARGUMENTS
 # -------------------------------
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/eval-EXP-20250617-095107/PC-DARTS.pth', help='Path to the original model weights')
-parser.add_argument('--save_path', type=str, default='model_pruned.pth', help='Path to save pruned model')
+parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/model_PCDARTS_base.pth', help='Path to the original model weights')
+parser.add_argument('--save_path', type=str, default='model_pruned_0_8.pth', help='Path to save pruned model')
 parser.add_argument('--prune_ratio', type=float, default=0.8, help='Channel pruning ratio')
 parser.add_argument('--init_channels', type=int, default=36, help='Initial channels')
 parser.add_argument('--layers', type=int, default=20, help='Number of layers')
 parser.add_argument('--auxiliary', action='store_true', help='Use auxiliary head')
 parser.add_argument('--drop_path_prob', type=float, default=0.0, help='drop path probability')
 parser.add_argument('--arch', type=str, default='PCDARTS', help='Architecture name (e.g., DARTS, PCDARTS)')
+parser.add_argument('--gpu', type=int, default=0, help='GPU ID')
+
 args = parser.parse_args()
 
 # -------------------------------
@@ -25,21 +27,9 @@ assert hasattr(genotypes, args.arch), f"❌ Architecture '{args.arch}' not found
 genotype = getattr(genotypes, args.arch)
 
 print(f"✅ Using architecture: {args.arch}")
-model = Network(
-    args.init_channels,
-    2,
-    args.layers,
-    args.auxiliary,
-    genotype
-)
-model.drop_path_prob = args.drop_path_prob
-# Load weights (support loading from .pth or state_dict)
-state = torch.load(args.model_path, map_location='cpu')
-if isinstance(state, dict) and 'state_dict' in state:
-    model.load_state_dict(state['state_dict'])
-else:
-    model.load_state_dict(state)
-model.eval()
+device = torch.device('cpu')
+model = torch.load(args.model_path, map_location=device, weights_only=False)
+model.to(device)
 
 # -------------------------------
 # WRAP MODEL FOR PRUNING

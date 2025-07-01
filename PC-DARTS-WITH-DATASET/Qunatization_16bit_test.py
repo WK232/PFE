@@ -17,20 +17,17 @@ parser = argparse.ArgumentParser("Test FP16 Compressed Model")
 parser.add_argument('--data', type=str, default='/home/kharratw/Documents/tessssst/PFE/ReadyToBeUsedDataset', help='Path to dataset')
 parser.add_argument('--batch_size', type=int, default=2, help='Batch size')
 parser.add_argument('--gpu', type=int, default=0, help='GPU ID')
-parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/fp16_compressed_model.pth', help='Path to FP16 model')
+parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/Pruned_0_6_then_fp16_compressed_model.pth', help='Path to FP16 model')
 args = parser.parse_args()
 
 # ----------------------------
 # Load Model
 # ----------------------------
 device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
-model = Network(36, 2, 20, False, genotypes.PCDARTS)
-model.drop_path_prob = 0.0  # Disable drop path for evaluation
-
-model.to(device)
-model.load_state_dict(torch.load(args.model_path, map_location=device))
+model = torch.load(args.model_path, map_location=device,weights_only=False)
+model = model.to(device).half()
 model.eval()
-print("param number = %d", utils.count_parameters(model))
+print("param number = %d" % utils.count_parameters(model))
 print("✅ FP16 Model loaded.")
 
 # ----------------------------
@@ -93,15 +90,19 @@ sample_count = 0
 with torch.no_grad():
     for step, ((coh, pha), target) in enumerate(val_loader):
         coh, pha, target = coh.to(device), pha.to(device), target.to(device)
-        input_tensor = torch.cat([coh, pha], dim=1)
+        coh = coh.half()
+        pha = pha.half()
+
+        input_tensor = torch.cat([coh, pha], dim=1)  # Shape: [B, 2, H, W]
 
         logits = model(input_tensor)
-        if isinstance(logits, tuple): logits = logits[0]
+        if isinstance(logits, tuple):
+            logits = logits[0]
 
         if logits.shape[2:] != target.shape[1:]:
             logits = F.interpolate(logits, size=target.shape[1:], mode='bilinear', align_corners=False)
 
-        loss = criterion(logits, target.long())
+        loss = criterion(logits.float(), target.long())  # use float32 for loss
         acc, recall, _ = utils.pixel_metrics(logits, target, 2)
         n = input_tensor.size(0)
 
@@ -119,7 +120,6 @@ with torch.no_grad():
                 iou_sum += iou
                 valid_iou_count += 1
 
-            # Save visualizations for 2 samples max
             if sample_count < 2:
                 visualize_sample(coh[i], pha[i], pred_np, target_np, iou or 0, acc, idx=sample_count)
                 sample_count += 1
