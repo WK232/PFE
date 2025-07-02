@@ -18,7 +18,7 @@ import utils
 # ----------------------------
 parser = argparse.ArgumentParser("Evaluate Pruned Segmentation Model")
 parser.add_argument('--data', type=str, default='/home/kharratw/Documents/tessssst/PFE/ReadyToBeUsedDataset', help='Path to dataset')
-parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/model_quantification_16bit_pruned_0.6.pth', help='Path to pruned model')
+parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/fp16_compressed_model_basic.pth', help='Path to pruned model')
 parser.add_argument('--batch_size', type=int, default=4, help='Batch size')
 parser.add_argument('--gpu', type=int, default=0, help='GPU ID')
 parser.add_argument('--init_channels', type=int, default=36)
