@@ -18,7 +18,7 @@ import utils
 # ----------------------------
 parser = argparse.ArgumentParser("Evaluate Pruned Segmentation Model")
 parser.add_argument('--data', type=str, default='/home/kharratw/Documents/tessssst/PFE/ReadyToBeUsedDataset', help='Path to dataset')
-parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/model_pruned_0_8.pth', help='Path to pruned model')
+parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/Pruned_0_6_then_fp16_compressed_model.pth', help='Path to pruned model')
 parser.add_argument('--batch_size', type=int, default=4, help='Batch size')
 parser.add_argument('--gpu', type=int, default=0, help='GPU ID')
 parser.add_argument('--init_channels', type=int, default=36)
@@ -152,7 +152,7 @@ def evaluate():
 
     with torch.no_grad():
         for step, ((coh, pha), target) in enumerate(val_loader):
-            coh, pha, target = coh.to(device), pha.to(device), target.to(device)
+            coh, pha, target = coh.to(device).half(), pha.to(device).half(), target.to(device)
             input_tensor = torch.cat([coh, pha], dim=1)
 
             logits = model(input_tensor)
@@ -210,10 +210,6 @@ def evaluate():
     print(f"Avg IoU (Class 1): {avg_iou:.4f}")
 
 
-import time
 
 if __name__ == '__main__':
-    start = time.time()
     evaluate()
-    end = time.time()
-    print(end - start)
