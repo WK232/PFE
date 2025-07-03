@@ -8,13 +8,13 @@ from model import NetworkCIFAR as Network  # Assumes Network is used across arch
 # ARGUMENTS
 # -------------------------------
 parser = argparse.ArgumentParser()
-parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/eval-EXP-20250617-095107/PC-DARTS.pth', help='Path to the original model weights')
-parser.add_argument('--save_path', type=str, default='model_PCDARTS_base.pth', help='Path to save pruned model')
+parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/kd-KD-EXP-20250625-163200-36channels-14layers/student_epoch_299.pth', help='Path to the original model weights')
+parser.add_argument('--save_path', type=str, default='model_PCDARTS_14layers_36channels.pth', help='Path to save pruned model')
 parser.add_argument('--prune_ratio', type=float, default=0.4, help='Channel pruning ratio')
 parser.add_argument('--init_channels', type=int, default=36, help='Initial channels')
 parser.add_argument('--layers', type=int, default=20, help='Number of layers')
 parser.add_argument('--auxiliary', action='store_true', help='Use auxiliary head')
-parser.add_argument('--drop_path_prob', type=float, default=0.0, help='drop path probability')
+parser.add_argument('--drop_path_prob', type=float, default=0.3, help='drop path probability')
 parser.add_argument('--arch', type=str, default='PCDARTS', help='Architecture name (e.g., DARTS, PCDARTS)')
 args = parser.parse_args()
 
@@ -26,9 +26,9 @@ genotype = getattr(genotypes, args.arch)
 
 print(f"✅ Using architecture: {args.arch}")
 model = Network(
-    args.init_channels,
+    36,
     2,
-    args.layers,
+    14,
     args.auxiliary,
     genotype
 )
