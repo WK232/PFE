@@ -18,7 +18,7 @@ import utils
 # ----------------------------
 parser = argparse.ArgumentParser("Evaluate Pruned Segmentation Model")
 parser.add_argument('--data', type=str, default='/home/kharratw/Documents/tessssst/PFE/ReadyToBeUsedDataset', help='Path to dataset')
-parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/kd-KD-EXP-20250625-163200-36channels-14layers/model_PCDARTS_14layers_36channels.pth', help='Path to pruned model')
+parser.add_argument('--model_path', type=str, default='/home/kharratw/Documents/tessssst/PFE/PC-DARTS-WITH-DATASET/model_PCDARTS_base.pth', help='Path to pruned model')
 parser.add_argument('--batch_size', type=int, default=4, help='Batch size')
 parser.add_argument('--gpu', type=int, default=0, help='GPU ID')
 parser.add_argument('--init_channels', type=int, default=36)
@@ -122,8 +122,20 @@ def evaluate():
     device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
     model = torch.load(args.model_path, map_location=device, weights_only=False)
     model.to(device)
-    print("param number = %d", utils.count_parameters(model))
+    # Count the total number of parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Total parameters: {total_params:,}")
 
+# Count the number of trainable parameters
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Trainable parameters: {trainable_params:,}")
+
+# Calculate model size in MB
+    import io
+    buffer = io.BytesIO()
+    torch.save(model.state_dict(), buffer)
+    size_in_mb = buffer.getbuffer().nbytes / 1e6
+    print(f"Model size (state_dict): {size_in_mb:.2f} MB")
     dataset = CoherencePhaseSegmentationDataset(args.data)
     train_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
     val_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=False, num_workers=2)

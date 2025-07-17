@@ -43,7 +43,7 @@ if __name__ == '__main__':
     print("usage:\n python {} ARCH_NAME".format(sys.argv[0]))
     sys.exit(1)
 
-  genotype_name = sys.argv[1]
+  genotype_name = "DARTS"
   try:
     genotype = eval('genotypes.{}'.format(genotype_name))
   except AttributeError:

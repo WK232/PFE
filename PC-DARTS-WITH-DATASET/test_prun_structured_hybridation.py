@@ -122,7 +122,19 @@ def evaluate():
     device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
     model = torch.load(args.model_path, map_location=device, weights_only=False)
     model.to(device)
-    print("param number = %d", utils.count_parameters(model))
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Total parameters: {total_params:,}")
+
+# Count the number of trainable parameters
+    trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print(f"Trainable parameters: {trainable_params:,}")
+
+# Calculate model size in MB
+    import io
+    buffer = io.BytesIO()
+    torch.save(model.state_dict(), buffer)
+    size_in_mb = buffer.getbuffer().nbytes / 1e6
+    print(f"Model size (state_dict): {size_in_mb:.2f} MB")
 
     dataset = CoherencePhaseSegmentationDataset(args.data)
     train_loader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=2)
